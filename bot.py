@@ -29,7 +29,7 @@ STEAM_URL = (
 )
 STEAMDB_URL = f"https://steamdb.info/app/{APP_ID}/charts/"
 DISCORD_API = "https://discord.com/api/v10"
-UPDATE_INTERVAL_MINUTES = 5
+UPDATE_INTERVAL_MINUTES = 1
 PEAK_FILE = Path(__file__).parent / "peak.json"
 SAMPLES_FILE = Path(__file__).parent / "samples.json"
 SAMPLE_RETENTION_HOURS = 24 * 7  # keep a week so we can extend windows later
@@ -37,10 +37,10 @@ DEFAULT_CHART_HOURS = 48
 EMBED_COLOR = 0x1B2838
 DESCRIPTION_MAX = 400  # Discord application description limit
 TZ_EST = ZoneInfo("America/New_York")
-CHART_BG = "#1B2838"
-CHART_LINE = "#A4D007"
-CHART_AXIS = "#9BA3AF"
-CHART_GRID = "#2A3F5A"
+CHART_BG = "#3d434d"
+CHART_LINE = "#c8ff00"
+CHART_AXIS = "#acaeb1"
+CHART_GRID = "#545960"
 
 logging.basicConfig(
     level=logging.INFO,
