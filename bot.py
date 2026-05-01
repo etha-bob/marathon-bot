@@ -37,10 +37,10 @@ DEFAULT_CHART_HOURS = 48
 EMBED_COLOR = 0x1B2838
 DESCRIPTION_MAX = 400  # Discord application description limit
 TZ_EST = ZoneInfo("America/New_York")
-CHART_BG = "#3d434d"
+CHART_BG = "#1B2838"
 CHART_LINE = "#c8ff00"
-CHART_AXIS = "#acaeb1"
-CHART_GRID = "#545960"
+CHART_AXIS = "#9BA3AF"
+CHART_GRID = "#2A3F5A"
 
 logging.basicConfig(
     level=logging.INFO,
