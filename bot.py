@@ -35,6 +35,7 @@ SAMPLE_RETENTION_HOURS = 24 * 7  # keep a week so we can extend windows later
 DEFAULT_CHART_HOURS = 48
 EMBED_COLOR = 0x1B2838
 DESCRIPTION_MAX = 400  # Discord application description limit
+TZ_EST = timezone(timedelta(hours=-5))
 CHART_BG = "#1B2838"
 CHART_LINE = "#A4D007"
 CHART_AXIS = "#9BA3AF"
@@ -142,7 +143,7 @@ def render_chart(samples: list[tuple[datetime, int]], hours: int) -> bytes:
     )
 
     ax.set_title(
-        f"Marathon — players, last {hours}h",
+        f"Marathon — players, last {hours}h  ·  times in EST",
         color="white",
         loc="left",
         fontsize=13,
@@ -159,7 +160,7 @@ def render_chart(samples: list[tuple[datetime, int]], hours: int) -> bytes:
 
     locator = mdates.AutoDateLocator(minticks=4, maxticks=8)
     ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M\n%b %d", tz=timezone.utc))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M\n%b %d", tz=TZ_EST))
     ax.set_ylim(bottom=0)
     ax.margins(x=0.01)
 
@@ -211,15 +212,20 @@ class MarathonBot(discord.Client):
 
     async def update_application_description(self, count: int) -> None:
         assert self.session is not None
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        now = datetime.now(TZ_EST)
+        hour = now.hour % 12 or 12
+        minute = now.strftime("%M")
+        ampm = "AM" if now.hour < 12 else "PM"
+        timestamp = now.strftime(f"%b %d %Y • {hour}:{minute} {ampm} EST")
+
+        samples_24h = self.samples.window(24)
+        peak_24h = max((c for _, c in samples_24h), default=count)
+
         lines = [
-            f"Tracking Marathon (Steam appid {APP_ID}).",
-            "",
-            f"Current players: {count:,}",
+            f"🔥 Live count: {count:,}",
+            f"📈 24 h peak: {peak_24h:,}",
+            f"⏱  {timestamp}",
         ]
-        if self.peak.count:
-            lines.append(f"Observed peak: {self.peak.count:,}")
-        lines.append(f"Updated {now}")
         description = "\n".join(lines)[:DESCRIPTION_MAX]
 
         try:
@@ -285,22 +291,21 @@ async def players_cmd(interaction: discord.Interaction) -> None:
         return
 
     bot.last_count = count
-    new_peak = bot.peak.update(count)
+    bot.peak.update(count)
+
+    samples_24h = bot.samples.window(24)
+    peak_24h = max((c for _, c in samples_24h), default=count)
+    low_24h = min((c for _, c in samples_24h), default=count)
 
     embed = discord.Embed(
         title="Marathon — current players",
         url=STEAMDB_URL,
-        description=f"**{count:,}** players in-game right now.",
         color=EMBED_COLOR,
         timestamp=datetime.now(timezone.utc),
     )
-    if bot.peak.count:
-        embed.add_field(
-            name="Peak (since bot started tracking)",
-            value=f"{bot.peak.count:,}",
-        )
-    if new_peak:
-        embed.set_footer(text="New peak just recorded!")
+    embed.add_field(name="Current", value=f"{count:,}", inline=True)
+    embed.add_field(name="24h Peak", value=f"{peak_24h:,}", inline=True)
+    embed.add_field(name="24h Low", value=f"{low_24h:,}", inline=True)
     await interaction.followup.send(embed=embed)
 
 
@@ -314,11 +319,17 @@ async def peak_cmd(interaction: discord.Interaction) -> None:
             "No peak recorded yet — give the bot a few minutes to poll Steam."
         )
         return
-    when = bot.peak.timestamp or "an unknown time"
+    if bot.peak.timestamp:
+        peak_dt = datetime.fromisoformat(bot.peak.timestamp).astimezone(TZ_EST)
+        hour = peak_dt.hour % 12 or 12
+        ampm = "AM" if peak_dt.hour < 12 else "PM"
+        when = peak_dt.strftime(f"%b %d %Y • {hour}:%M {ampm} EST")
+    else:
+        when = "an unknown time"
     embed = discord.Embed(
         title="Marathon — observed peak",
         url=STEAMDB_URL,
-        description=f"**{bot.peak.count:,}** players, recorded at `{when}` UTC.",
+        description=f"**{bot.peak.count:,}** players, recorded at `{when}`.",
         color=EMBED_COLOR,
     )
     await interaction.response.send_message(embed=embed)
