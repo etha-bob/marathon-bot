@@ -6,6 +6,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import aiohttp
@@ -35,7 +36,7 @@ SAMPLE_RETENTION_HOURS = 24 * 7  # keep a week so we can extend windows later
 DEFAULT_CHART_HOURS = 48
 EMBED_COLOR = 0x1B2838
 DESCRIPTION_MAX = 400  # Discord application description limit
-TZ_EST = timezone(timedelta(hours=-5))
+TZ_EST = ZoneInfo("America/New_York")
 CHART_BG = "#1B2838"
 CHART_LINE = "#A4D007"
 CHART_AXIS = "#9BA3AF"
