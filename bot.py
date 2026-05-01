@@ -276,6 +276,13 @@ bot = MarathonBot()
 async def on_ready() -> None:
     user = bot.user
     log.info("Logged in as %s (id %s)", user, user.id if user else "?")
+    await bot.change_presence(
+        status=discord.Status.online,
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name="Marathon players",
+        ),
+    )
 
 
 @bot.tree.command(
