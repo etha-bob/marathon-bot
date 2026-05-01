@@ -1,0 +1,7 @@
+.env
+peak.json
+samples.json
+__pycache__/
+*.pyc
+.venv/
+venv/
